@@ -28,6 +28,16 @@ resource "aws_lambda_function" "lambda" {
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
   runtime = "nodejs18.x"
+
+  //add memory
+timeout = 15
+  memory_size = 1024
+  environment {
+    variables = {
+      PRODUCTION = false      
+    }
+  }
+
 }
 
 
