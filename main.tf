@@ -76,6 +76,16 @@ resource "aws_iam_role_policy" "lambda" {
         Effect   = "Allow"
         Resource = "*"
       },
+
+      {
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Effect   = "Allow"
+        Resource = aws_sqs_queue.lambda-queue.arn
+      },
     ]
   })
 }
@@ -91,6 +101,40 @@ output "function_url" {
   value = aws_lambda_function_url.lambda.function_url
 }
 
+// create sns topic
+resource "aws_sns_topic" "lambda-topic" {
+  name = "lambda-topic"
+}
+
+
+resource "aws_sns_topic_subscription" "lambda_subscription" {
+  topic_arn = aws_sns_topic.lambda-topic.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.lambda.arn
+}
+
+resource "aws_lambda_permission" "allow_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.lambda-topic.arn
+}
+
+//create SQS Queue
+
+resource "aws_sqs_queue" "lambda-queue" {
+  name = "lambda-queue"
+}
+
+// Use the SQS queue as an event source for the lambda function
+
+resource "aws_lambda_event_source_mapping" "lambda" {
+  event_source_arn = aws_sqs_queue.lambda-queue.arn
+  function_name    = aws_lambda_function.lambda.arn
+  batch_size = 10
+  maximum_batching_window_in_seconds = 0
+}
 
 
 
