@@ -80,4 +80,17 @@ resource "aws_iam_role_policy" "lambda" {
   })
 }
 
+// Making our AWS Lambda available via a function URL
+
+resource "aws_lambda_function_url" "lambda" {
+  function_name      = aws_lambda_function.lambda.function_name
+  authorization_type = "NONE"
+}
+
+output "function_url" {
+  value = aws_lambda_function_url.lambda.function_url
+}
+
+
+
 
